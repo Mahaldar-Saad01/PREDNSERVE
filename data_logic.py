@@ -11,39 +11,15 @@ menu = [
 ]
 
 base_demand = {
-"Biryani":120,
-"Fried_Rice":80,
-"Noodles":70,
-"Paneer_Curry":60,
-"Chicken_Curry":90,
-"Soup":40,
-"Parotta":50,
-"Idli":110,
-"Dosa":100,
-"Samosa":85,
-"Cooldrinks":95,
-"IceCream":75,
-"Puri":90,
-"Tea":140,
-"Coffee":120
+"Biryani":120,"Fried_Rice":80,"Noodles":70,"Paneer_Curry":60,"Chicken_Curry":90,
+"Soup":40,"Parotta":50,"Idli":110,"Dosa":100,"Samosa":85,"Cooldrinks":95,
+"IceCream":75,"Puri":90,"Tea":140,"Coffee":120
 }
 
 price = {
-"Biryani":220,
-"Fried_Rice":180,
-"Noodles":160,
-"Paneer_Curry":200,
-"Chicken_Curry":240,
-"Soup":120,
-"Parotta":100,
-"Idli":60,
-"Dosa":80,
-"Samosa":30,
-"Cooldrinks":50,
-"IceCream":90,
-"Puri":70,
-"Tea":20,
-"Coffee":40
+"Biryani":220,"Fried_Rice":180,"Noodles":160,"Paneer_Curry":200,"Chicken_Curry":240,
+"Soup":120,"Parotta":100,"Idli":60,"Dosa":80,"Samosa":30,"Cooldrinks":50,
+"IceCream":90,"Puri":70,"Tea":20,"Coffee":40
 }
 
 weather_options = ["Sunny","Cloudy","Rainy"]
@@ -61,7 +37,6 @@ for i in range(days):
     day_of_week = date.strftime("%A")
 
     temperature = np.random.normal(30,4)
-
     weather = np.random.choice(weather_options,p=[0.5,0.3,0.2])
     season = np.random.choice(seasons)
 
@@ -78,24 +53,19 @@ for i in range(days):
 
         demand = base_demand[item]
 
-        # weekend effect
         if is_weekend:
             demand *= 1.15
 
-        # festivals boost restaurant traffic
         if event=="Festival":
             demand *= 1.30
 
-        # promotion
         if promotion:
             demand *= 1.20
 
-        # rain behavior
         if weather=="Rainy":
             if item in ["Soup","Samosa","Parotta","Tea"]:
                 demand *= 1.30
 
-        # temperature logic
         if temperature > 34:
             if item in ["Cooldrinks","IceCream"]:
                 demand *= 1.45
@@ -108,29 +78,32 @@ for i in range(days):
             if item in ["Soup","Tea","Coffee"]:
                 demand *= 1.30
 
-        # breakfast food adjustment
         if item in ["Idli","Dosa","Puri"]:
             demand *= 0.95
 
-        # snack logic
         if item=="Samosa":
             demand *= 1.10
 
-        # tea/coffee weekday rush
         if item in ["Tea","Coffee"] and not is_weekend:
             demand *= 1.10
 
-        # price elasticity
         demand *= (1 - price[item]/2500)
 
-        # historical momentum
         demand *= (0.6 + 0.4*(historical_sales[item]/base_demand[item]))
 
-        # random noise
-        demand = int(np.random.normal(demand, demand*0.08))
-        demand = max(5,demand)
+        actual_sales = int(np.random.normal(demand, demand*0.08))
+        actual_sales = max(5,actual_sales)
 
-        historical_sales[item] = demand
+        # predicted demand based on previous trend
+        predicted_sales = int(actual_sales * np.random.uniform(0.9,1.1))
+
+        # production with safety buffer
+        buffer = np.random.uniform(0.05,0.15)
+        production = int(predicted_sales * (1 + buffer))
+
+        wastage = max(0, production - actual_sales)
+
+        historical_sales[item] = actual_sales
 
         rows.append({
             "date":date,
@@ -142,15 +115,18 @@ for i in range(days):
             "is_weekend":is_weekend,
             "holiday":holiday,
             "menu_item":item,
-            "historical_sales":demand,
+            "historical_sales":historical_sales[item],
             "price":price[item],
             "promotion":promotion,
-            "actual_sales":demand
+            "predicted_sales":predicted_sales,
+            "production":production,
+            "actual_sales":actual_sales,
+            "wastage":wastage
         })
 
 df = pd.DataFrame(rows)
 
-df.to_csv("restaurant_sales_1year.csv",index=False)
+df.to_csv("restaurant_sales.csv",index=False)
 
 print(df.head())
-print("Total rows:",len(df))
+print("Rows:",len(df))
