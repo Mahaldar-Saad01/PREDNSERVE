@@ -12,9 +12,7 @@ from pydantic import BaseModel,Field,EmailStr
 class user(BaseModel):
     username:str=Field(...,maxlength=50,description="enter the username")
     email:EmailStr
-    password:str=Field(...,minlength=8,description="enter the password")
-
-
+    password:str=Field(...,minlength=8,maxlength=72,description="enter the password")
 
 app = FastAPI()
 
@@ -31,10 +29,10 @@ def home():
     return {"greeting":"welcome to PREDNSERVE"}
 
 @app.post('/create_user')
-def create_user(obj:user,db:session=Depends(get_db)):
+def create_user(obj:user,db:Session=Depends(get_db)):
     hashed=security.hash_password(obj.password)
 
-    db_user=user(
+    db_user=models.user(
         username=obj.username,
         email=obj.email,
         hashed_password=hashed
@@ -43,7 +41,6 @@ def create_user(obj:user,db:session=Depends(get_db)):
     db.commit()
     db.refresh(db_user)
     return db_user
-
 
 @app.get("/restaurants/")
 def read_restaurants(db: Session = Depends(get_db)):
