@@ -1,28 +1,45 @@
-from fastapi import FastAPI, Depends,HTTPException
+from fastapi import FastAPI, Depends, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-from models import User,Restaurant,Base
-from database import SessionLocal, engine
+from models import User, Restaurant, Base
+from database import SessionLocal, engine, get_db
 import auth
-from database import get_db
 from datetime import datetime
 from auth import get_current_user
 from fastapi.security import OAuth2PasswordRequestForm
 from routers import ml
 
+from pydantic import BaseModel, Field, EmailStr
 
-# Create tables in the database (if they don't exist)
+app = FastAPI()
+
+# Allow frontend connection
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Create tables
 Base.metadata.create_all(bind=engine)
 
-#pydantic models
-from pydantic import BaseModel,Field,EmailStr
-class user_(BaseModel):
-    username:str=Field(...,maxlength=50,description="enter the username")
-    email:EmailStr
-    password:str=Field(...,minlength=4,maxlength=20,description="enter the password")
+
+# -------------------------
+# Pydantic Models
+# -------------------------
+
+class UserCreate(BaseModel):
+    username: str = Field(..., max_length=50)
+    email: EmailStr
+    password: str = Field(..., min_length=4, max_length=7)
+
 
 class LoginRequest(BaseModel):
     email: str
     password: str
+
 
 class UserResponse(BaseModel):
     id: int
@@ -30,10 +47,12 @@ class UserResponse(BaseModel):
     email: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+
 
 class RestaurantCreate(BaseModel):
     res_name: str
+
 
 class RestaurantResponse(BaseModel):
     res_id: int
@@ -42,35 +61,42 @@ class RestaurantResponse(BaseModel):
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
-app = FastAPI()
 
+# Include ML router
 app.include_router(ml.router)
 
-#api end points
+
+# -------------------------
+# API Endpoints
+# -------------------------
+
 @app.get('/')
 def home():
-    return {"greeting":"welcome to PREDNSERVE"}
+    return {"greeting": "welcome to PREDNSERVE"}
 
+
+# Register User
 @app.post("/home/register_user", response_model=UserResponse)
-def create_user(obj:user_,db:Session=Depends(get_db)):
-    hashed=auth.hash_password(obj.password)
+def create_user(obj: UserCreate, db: Session = Depends(get_db)):
 
-    existing = db.query(User).filter(User.email == obj.email).first()
-    if existing:
-        raise HTTPException(status_code=400, detail="Email already registered")
-        
-    db_user=User(
+    hashed = auth.hash_password(obj.password)
+
+    db_user = User(
         username=obj.username,
         email=obj.email,
         hashed_password=hashed
     )
+
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
+
     return db_user
 
+
+# Login
 @app.post("/login")
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
 
@@ -91,6 +117,8 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
         "token_type": "bearer"
     }
 
+
+# Add Restaurant
 @app.post("/add_restaurant", response_model=RestaurantResponse)
 def add_restaurant(
     restaurant: RestaurantCreate,
@@ -109,7 +137,16 @@ def add_restaurant(
 
     return new_restaurant
 
+
+# Get Restaurants (ONLY FOR CURRENT USER)
 @app.get("/restaurants/")
-def read_restaurants(db: Session = Depends(get_db)):
-    restaurants = db.query(Restaurant).all()
+def read_restaurants(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+
+    restaurants = db.query(Restaurant).filter(
+        Restaurant.owner_id == current_user.id
+    ).all()
+
     return restaurants
