@@ -40,27 +40,102 @@ function CreateRestaurant(){
   };
 
   return(
+<div style={styles.container}>
 
-    <div>
+  <div style={styles.card}>
 
-      <h2>Create Restaurant</h2>
+    <h2 style={styles.title}>Create Restaurant</h2>
 
-      <input
-        placeholder="Restaurant Name"
-        value={resName}
-        onChange={(e)=>setResName(e.target.value)}
-      />
+    <p style={styles.subtitle}>
+      Add a new restaurant to start demand prediction
+    </p>
 
-      <br/><br/>
+    <input
+      style={styles.input}
+      placeholder="Restaurant Name"
+      value={resName}
+      onChange={(e)=>setResName(e.target.value)}
+    />
 
-      <button onClick={handleSubmit}>
-        Create Restaurant
-      </button>
+    <button
+      style={styles.button}
+      onClick={handleSubmit}
+    >
+      Create Restaurant
+    </button>
 
-    </div>
+  </div>
+
+</div>
+    // <div>
+
+    //   <h2>Create Restaurant</h2>
+
+    //   <input
+    //     placeholder="Restaurant Name"
+    //     value={resName}
+    //     onChange={(e)=>setResName(e.target.value)}
+    //   />
+
+    //   <br/><br/>
+
+    //   <button onClick={handleSubmit}>
+    //     Create Restaurant
+    //   </button>
+
+    // </div>
 
   );
 
 }
+const styles = {
 
+container:{
+  height:"100vh",
+  display:"flex",
+  justifyContent:"center",
+  alignItems:"center",
+  background:"#f4f6f9"
+},
+
+card:{
+  width:"350px",
+  background:"white",
+  padding:"35px",
+  borderRadius:"10px",
+  boxShadow:"0 10px 25px rgba(0,0,0,0.1)",
+  textAlign:"center"
+},
+
+title:{
+  marginBottom:"10px"
+},
+
+subtitle:{
+  color:"gray",
+  fontSize:"14px",
+  marginBottom:"20px"
+},
+
+input:{
+  width:"100%",
+  padding:"12px",
+  border:"1px solid #ddd",
+  borderRadius:"6px",
+  marginBottom:"20px",
+  fontSize:"14px"
+},
+
+button:{
+  width:"100%",
+  padding:"12px",
+  background:"#6f42c1",
+  color:"white",
+  border:"none",
+  borderRadius:"6px",
+  fontSize:"15px",
+  cursor:"pointer"
+}
+
+}
 export default CreateRestaurant;
