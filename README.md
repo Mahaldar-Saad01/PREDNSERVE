@@ -135,8 +135,8 @@ Frontend runs on:
   
 👨‍💻 Author
 
-  Mahaldar Saad
-  Saniya Syeda
+  ~Mahaldar Saad
+  ~Saniya Syeda
 
 📄 License
 
